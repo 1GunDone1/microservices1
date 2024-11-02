@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Status</title>
+    <style>
+        .online {
+            color: green;
+        }
+
+        .offline {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Status</h1>
+    <ul id="userList"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.9/signalr.min.js"></script>
+    <script>
+        const userListElement = document.getElementById('userList');
+        let users = [];
+
+        // Функция для получения списка пользователей
+        async function fetchUsers() {
+            const response = await fetch('/api/v1/users');
+            users = await response.json();
+            renderUserList();
+        }
+
+        // Функция для отображения списка пользователей
+        function renderUserList() {
+            userListElement.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user.username + ' ';
+                const statusIndicator = document.createElement('span');
+                statusIndicator.textContent = '●';
+                statusIndicator.className = user.isOnline ? 'online' : 'offline';
+                li.appendChild(statusIndicator);
+                userListElement.appendChild(li);
+            });
+        }
+
+        // Установка подключения к SignalR хабу
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/userStatusHub')
+            .build();
+
+        connection.on('ReceiveUserStatusChange', (userId, isOnline) => {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.isOnline = isOnline;
+                renderUserList();
+            }
+        });
+
+        connection.start()
+            .then(() => console.log('Connected to SignalR hub'))
+            .catch(err => console.error(err.toString()));
+
+        // Получение списка пользователей при загрузке страницы
+        fetchUsers();
+    </script>
+</body>
+</html>

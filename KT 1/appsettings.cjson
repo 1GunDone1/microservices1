@@ -1,0 +1,5 @@
+"Jwt": {
+  "Key": "your_super_secret_key_which_is_long_enough",
+  "Issuer": "yourdomain.com",
+  "Audience": "yourdomain.com"
+}
